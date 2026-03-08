@@ -581,12 +581,10 @@ async def generate_descriptions(request: Request, body: GenerateDescriptionsRequ
                             variant_text = variant_text[-20:]
                             yield f"data: {json.dumps({'type': 'token', 'text': emit_text, 'variant': current_variant})}\n\n"
 
-                # Flush remaining text
+                # Flush remaining text and send final variant_complete only if there's content
                 if variant_text.strip():
                     yield f"data: {json.dumps({'type': 'token', 'text': variant_text, 'variant': current_variant})}\n\n"
-
-                # Final variant complete
-                yield f"data: {json.dumps({'type': 'variant_complete', 'variant': current_variant, 'word_count': len(variant_text.split())})}\n\n"
+                    yield f"data: {json.dumps({'type': 'variant_complete', 'variant': current_variant, 'word_count': len(variant_text.split())})}\n\n"
 
             elapsed_ms = int((time.time() - start_time) * 1000)
             total_words = len(full_text.replace("---VARIANT---", "").split())

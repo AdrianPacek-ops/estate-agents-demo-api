@@ -561,17 +561,17 @@ async def generate_descriptions(request: Request, body: GenerateDescriptionsRequ
                         before_marker = variant_text.split("---VARIANT---")[0]
                         # Emit remaining text before marker
                         if before_marker.strip():
-                            yield f"event: token\ndata: {json.dumps({'text': before_marker.rstrip(), 'variant': current_variant})}\n\n"
+                            yield f"data: {json.dumps({'type': 'token', 'text': before_marker.rstrip(), 'variant': current_variant})}\n\n"
 
                         word_count = len(variant_text.split("---VARIANT---")[0].split())
-                        yield f"event: variant_complete\ndata: {json.dumps({'variant': current_variant, 'word_count': word_count})}\n\n"
+                        yield f"data: {json.dumps({'type': 'variant_complete', 'variant': current_variant, 'word_count': word_count})}\n\n"
 
                         current_variant += 1
                         # Keep text after marker
                         variant_text = variant_text.split("---VARIANT---", 1)[1]
                         # Don't emit the variant_text remainder yet — it'll be emitted as tokens
                         if variant_text.strip():
-                            yield f"event: token\ndata: {json.dumps({'text': variant_text.lstrip(), 'variant': current_variant})}\n\n"
+                            yield f"data: {json.dumps({'type': 'token', 'text': variant_text.lstrip(), 'variant': current_variant})}\n\n"
                             variant_text = ""
                     else:
                         # Normal token — emit if no pending marker check needed
@@ -579,21 +579,21 @@ async def generate_descriptions(request: Request, body: GenerateDescriptionsRequ
                         if len(variant_text) > 20 and "---" not in variant_text[-20:]:
                             emit_text = variant_text[:-20]
                             variant_text = variant_text[-20:]
-                            yield f"event: token\ndata: {json.dumps({'text': emit_text, 'variant': current_variant})}\n\n"
+                            yield f"data: {json.dumps({'type': 'token', 'text': emit_text, 'variant': current_variant})}\n\n"
 
                 # Flush remaining text
                 if variant_text.strip():
-                    yield f"event: token\ndata: {json.dumps({'text': variant_text, 'variant': current_variant})}\n\n"
+                    yield f"data: {json.dumps({'type': 'token', 'text': variant_text, 'variant': current_variant})}\n\n"
 
                 # Final variant complete
-                yield f"event: variant_complete\ndata: {json.dumps({'variant': current_variant, 'word_count': len(variant_text.split())})}\n\n"
+                yield f"data: {json.dumps({'type': 'variant_complete', 'variant': current_variant, 'word_count': len(variant_text.split())})}\n\n"
 
             elapsed_ms = int((time.time() - start_time) * 1000)
             total_words = len(full_text.replace("---VARIANT---", "").split())
-            yield f"event: done\ndata: {json.dumps({'variants': current_variant, 'total_words': total_words, 'generation_time_ms': elapsed_ms})}\n\n"
+            yield f"data: {json.dumps({'type': 'done', 'variants': current_variant, 'total_words': total_words, 'generation_time_ms': elapsed_ms})}\n\n"
 
         except Exception as e:
-            yield f"event: error\ndata: {json.dumps({'message': f'Description generation failed: {str(e)[:100]}'})}\n\n"
+            yield f"data: {json.dumps({'type': 'error', 'message': f'Description generation failed: {str(e)[:100]}'})}\n\n"
 
     return StreamingResponse(
         stream(),

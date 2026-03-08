@@ -195,7 +195,7 @@ def image_to_data_url(image_bytes: bytes, content_type: str) -> str:
     return f"data:{mime};base64,{b64}"
 
 
-async def read_upload(upload: UploadFile, max_size: int = 4 * 1024 * 1024) -> bytes:
+async def read_upload(upload: UploadFile, max_size: int = 8 * 1024 * 1024) -> bytes:
     """Read and validate an uploaded image file."""
     data = await upload.read()
     if len(data) > max_size:
